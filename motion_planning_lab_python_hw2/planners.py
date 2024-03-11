@@ -47,7 +47,7 @@ class RRT_STAR(object):
             nearest_state_idx, nearest_state = self.tree.GetNearestVertex(random_state)
             new_state = self.extend(nearest_state, random_state)
             # if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
-            if True:
+            if self.bb.local_planner(nearest_state,new_state):
                 print("in!")
                 new_state_idx = self.tree.AddVertex(new_state)
                 if all(new_state == goal_conf):
