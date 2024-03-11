@@ -39,7 +39,7 @@ class RRT_STAR(object):
         self.tree.AddVertex(start_conf)
         plan = []
         goal_idx = None
-        
+        print(self.tree.vertices)
         while i < self.max_itr:
             i += 1
             self.real_k = self.get_k_num(i)
@@ -47,12 +47,13 @@ class RRT_STAR(object):
             nearest_state_idx, nearest_state = self.tree.GetNearestVertex(random_state)
             new_state = self.extend(nearest_state, random_state)
             # if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
-            if self.bb.is_in_collision(new_state) and self.bb.local_planner(nearest_state, new_state):
+            if True:
+                print("in!")
                 new_state_idx = self.tree.AddVertex(new_state)
-                if new_state == goal_conf:
+                if all(new_state == goal_conf):
                     goal_idx = new_state_idx
                 self.tree.AddEdge(nearest_state_idx, new_state_idx)
-                if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.real_k: # make sure the state has at least has k neighbors
+                if len(self.tree.vertices) > self.real_k: # make sure the state has at least has k neighbors
                     k_nearest_idxs, k_nearest_states = self.tree.GetKNN(new_state, self.real_k)
                     for idx in k_nearest_idxs:
                         self.rewire(idx, new_state_idx)
@@ -60,6 +61,14 @@ class RRT_STAR(object):
                         self.rewire(new_state_idx, idx)
         if goal_idx != None:
             self.compute_plan(plan,0, goal_idx)
+        else:
+            dist = 1000000000
+            best_idx = 0
+            for vert, vert_conf in enumerate(self.tree.vertices):
+                if self.bb.edge_cost(vert_conf,goal_conf) < dist:
+                    best_idx = vert
+                    dist = self.bb.edge_cost(vert_conf,goal_conf)
+            self.compute_plan(plan,0,best_idx)
         return np.array(plan)
     
     def extend(self, x_near, x_random)-> np.array:
@@ -77,7 +86,7 @@ class RRT_STAR(object):
         new_state = x_random + (n * normed_direction)
         return new_state
         
-    def rewire_children(self, parent_idx):
+    def rewire_children(self, parent_idx, parent_cost):
         # Get the list of children vertices
         children_idxs = [idx for idx, parent in self.tree.edges.items() if parent == parent_idx]
         
@@ -86,12 +95,14 @@ class RRT_STAR(object):
             child_vertex = self.tree.vertices[child_idx]
             
             # Recompute the cost of the child considering the new parent
-            new_cost = self.tree.vertices[parent_idx].cost + self.planning_env.compute_distance(self.tree.vertices[parent_idx].state, child_vertex.state)
+        
+            new_cost = parent_cost + self.bb.edge_cost(self.tree.vertices[parent_idx], child_vertex)
             
             # If the new cost is lower than the child's current cost, update the child's cost and rewire its children recursively
-            if new_cost < child_vertex.cost:
-                child_vertex.cost = new_cost
-                self.rewire_children(child_idx)
+            
+            _, child_cost = self.get_shortest_path(child_idx)
+            if new_cost < child_cost:
+                self.rewire_children(child_idx,new_cost)
     
     def rewire(self, x_potential_parent_id, x_child_id) -> None:
         '''
@@ -100,35 +111,38 @@ class RRT_STAR(object):
         @param x_child_id - the id of the child vertex
         return None
         '''
+
+        if(x_child_id >= len(self.tree.vertices) or x_potential_parent_id >= len(self.tree.vertices)):
+            return None
+        
         # Get the child and potential parent vertices
-        child_vertex = self.tree.vertices.get(x_child_id)
-        potential_parent_vertex = self.tree.vertices.get(x_potential_parent_id)
+        child_vertex = self.tree.vertices[x_child_id]
+        potential_parent_vertex = self.tree.vertices[x_potential_parent_id]
 
-        if child_vertex and potential_parent_vertex:
-            # Check if the edge between potential parent and child is valid
-            if self.planning_env.edge_validity_checker(potential_parent_vertex.state, child_vertex.state):
-                # Compute the cost of the edge between potential parent and child
-                edge_cost = self.planning_env.compute_distance(potential_parent_vertex.state, child_vertex.state)
+        # Check if the edge between potential parent and child is valid
+        if not self.bb.local_planner(potential_parent_vertex, child_vertex):
+            return None
+        
+        # Compute the cost of the edge between potential parent and child
+        edge_cost = self.bb.edge_cost(potential_parent_vertex, child_vertex)
 
-                # Calculate the total cost if we rewire the child to the potential parent
-                total_cost = potential_parent_vertex.cost + edge_cost
+        # Calculate the total cost if we rewire the child to the potential parent
+        _, potential_parent_cost = self.get_shortest_path(x_potential_parent_id)
+        total_cost = potential_parent_cost + edge_cost
 
-                # Check if rewiring reduces the cost of the child
-                if total_cost < child_vertex.cost:
-                    # Update the existing edge if it exists
-                    if x_child_id in self.tree.edges:
-                        # Update the cost of the child
-                        child_vertex.cost = total_cost
-                        # Update the parent of the child to the potential parent
-                        self.tree.edges[x_child_id] = x_potential_parent_id
-                        # Rewire children recursively if necessary
-                        self.rewire_children(x_child_id)
-                    else:
-                        # print("Error: Child index not found in tree edges.")
-                        pass
-        else:
-            # print("Error: Child or potential parent vertex not found in tree.")
-            pass
+        # Check if rewiring reduces the cost of the child
+        _, child_cost = self.get_shortest_path(x_child_id)        
+        if not total_cost < child_cost:
+            return None
+        
+        # Update the existing edge if it exists
+        if x_child_id in self.tree.edges:
+            # Update the cost of the child
+            child_cost = total_cost
+            # Update the parent of the child to the potential parent
+            self.tree.edges[x_child_id] = x_potential_parent_id
+            # Rewire children recursively if necessary
+            self.rewire_children(x_child_id,potential_parent_cost)
 
     def get_shortest_path(self, dest):
         '''

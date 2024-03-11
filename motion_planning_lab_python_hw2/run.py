@@ -31,7 +31,9 @@ def main():
     path = rrt_star_planner.find_path(start_conf=env2_start,
                                         goal_conf=env2_goal,
                                         filename=filename)
-                                                
+
+    print(len(path))
+    print(path)       
     try:
         np.save(filename+'_path', path)
         path = np.load(filename+'_path.npy')
