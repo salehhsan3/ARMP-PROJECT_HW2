@@ -18,7 +18,7 @@ def main():
                         p_bias=0.05,)
     
     rrt_star_planner = RRT_STAR(max_step_size=0.5,
-                                max_itr=2000, 
+                                max_itr=200, 
                                 bb=bb)
     
     visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)

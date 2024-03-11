@@ -34,19 +34,23 @@ class RRT_STAR(object):
     def find_path(self, start_conf, goal_conf, filename):
         """Implement RRT-STAR"""
         
-        i = 1
+        i = 0
         time_start = time.time()
         self.tree.AddVertex(start_conf)
         plan = []
+        goal_idx = None
         
         while i < self.max_itr:
+            i += 1
             self.real_k = self.get_k_num(i)
             random_state = self.bb.sample(goal_conf)
             nearest_state_idx, nearest_state = self.tree.GetNearestVertex(random_state)
             new_state = self.extend(nearest_state, random_state)
             # if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
             if self.bb.is_in_collision(new_state) and self.bb.local_planner(nearest_state, new_state):
-                new_state_idx = self.tree.add_vertex(new_state)
+                new_state_idx = self.tree.AddVertex(new_state)
+                if new_state == goal_conf:
+                    goal_idx = new_state_idx
                 self.tree.AddEdge(nearest_state_idx, new_state_idx)
                 if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.real_k: # make sure the state has at least has k neighbors
                     k_nearest_idxs, k_nearest_states = self.tree.GetKNN(new_state, self.real_k)
@@ -54,7 +58,8 @@ class RRT_STAR(object):
                         self.rewire(idx, new_state_idx)
                     for idx in k_nearest_idxs:
                         self.rewire(new_state_idx, idx)
-        self.compute_plan(plan,start_conf,goal_conf)
+        if goal_idx != None:
+            self.compute_plan(plan,0, goal_idx)
         return np.array(plan)
     
     def extend(self, x_near, x_random)-> np.array:
