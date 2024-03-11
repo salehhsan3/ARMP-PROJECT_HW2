@@ -83,7 +83,7 @@ class RRT_STAR(object):
         if dist < n:
             return x_random
         normed_direction = (x_random - x_near) / dist # normed vector
-        new_state = x_random + (n * normed_direction)
+        new_state = x_near + (n * normed_direction)
         return new_state
         
     def rewire_children(self, parent_idx, parent_cost):
