@@ -15,53 +15,30 @@ class RRT_STAR(object):
         i = 1
         time_start = time.time()
         self.tree.AddVertex(start_conf)
-
-        while i < self.max_itr:
-            pass
-        start_time = time.time()
-        # self.time_limit = 300 # time limit for the algorithm's run time
-        prev_time = start_time
-        # initialize an empty plan.
         plan = []
-        # TODO: Task 4.4
-        self.tree.add_vertex(self.planning_env.start)
+        
         while i < self.max_itr:
-            self.real_k = max(1, int(np.log(1 + len(self.tree.vertices)))) if (self.k == 1) else self.k # to update the value!!
-            goal_bias = np.random.random()
-            x_limit, y_limit = self.planning_env.xlimit, self.planning_env.ylimit
-            if goal_bias < self.goal_prob: # correct way??
-                random_state = np.array([np.random.uniform(x_limit[0], x_limit[1]), np.random.uniform(y_limit[0], y_limit[1])])
-            else:
-                random_state = self.planning_env.goal
+            self.real_k = self.get_k_num(i)
+            # goal_bias = np.random.random()
+            # x_limit, y_limit = self.planning_env.xlimit, self.planning_env.ylimit
+            # if goal_bias < self.goal_prob: # correct way??
+            #     random_state = np.array([np.random.uniform(x_limit[0], x_limit[1]), np.random.uniform(y_limit[0], y_limit[1])])
+            # else:
+            #     random_state = goal_conf
+            random_state = self.bb.sample(goal_conf)
             nearest_state_idx, nearest_state = self.tree.get_nearest_state(random_state)
             new_state = self.extend(nearest_state, random_state)
             if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
                 new_state_idx = self.tree.add_vertex(new_state)
                 self.tree.add_edge(nearest_state_idx, new_state_idx, self.planning_env.compute_distance(nearest_state, new_state))
-                if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.k: # make sure the state has at least has k neighbors
-                    k_nearest_idxs, k_nearest_states = self.tree.get_k_nearest_neighbors(new_state, self.real_k)
+                if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.real_k: # make sure the state has at least has k neighbors
+                    k_nearest_idxs, k_nearest_states = self.tree.GetKNN(new_state, self.real_k)
                     for idx in k_nearest_idxs:
-                        self.rewire_rrt_star(idx, new_state_idx)
+                        self.rewire(idx, new_state_idx)
                     for idx in k_nearest_idxs:
-                        self.rewire_rrt_star(new_state_idx, idx)
-            current_time = time.time() - prev_time
-            if (self.tree.is_goal_exists(self.planning_env.goal)) and (current_time >= self.time_interval):
-                if (time.time() - start_time) <= self.time_limit:
-                    plan = self.compute_plan([])
-                    self.costs.append(self.compute_cost(plan))
-                    self.times.append(time.time() - start_time)
-                    prev_time = time.time()
-        
-        # print total path cost and time
-        plan = self.compute_plan([])
-        if (time.time() - start_time) <= self.time_limit:
-            self.costs.append(self.compute_cost(plan))
-            self.times.append(time.time() - start_time)
-        
-        print('Total cost of path: {:.2f}'.format(self.compute_cost(plan)))
-        print('Total time: {:.2f}'.format(time.time()-start_time))
-
-        return np.array(plan)
+                        self.rewire(new_state_idx, idx)
+                        
+        # return np.array(plan)
 
 
 
