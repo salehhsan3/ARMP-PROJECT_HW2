@@ -9,15 +9,14 @@ class RRT_STAR(object):
         self.bb = bb
         self.tree = RRTTree(bb)
         
-    def compute_plan(self, plan, start_conf, goal_conf):
-        curr_idx = self.tree.get_idx_for_state(start_conf)
-        start_idx = self.tree.get_idx_for_state(goal_conf)
+    def compute_plan(self, plan, start_idx, goal_idx):
+        curr_idx = goal_idx
         while curr_idx != start_idx:
             # print(self.tree.edges)
-            plan.append(self.tree.vertices[curr_idx].state)
+            plan.append(self.tree.vertices[curr_idx])
             curr_idx = self.tree.edges[curr_idx]
         # Add the start state to the plan.
-        plan.append(start_conf)
+        plan.append(self.tree.vertices[start_idx])
         plan.reverse()
         return plan
 
@@ -66,9 +65,9 @@ class RRT_STAR(object):
         return the extended configuration
         '''
         n = self.max_step_size # a changeable parameter for step-size
-        if self.planning_env.compute_distance(x_near, x_random) < n:
+        dist = self.bb.edge_cost(x_near, x_random)
+        if dist < n:
             return x_random
-        dist = self.planning_env.compute_distance(x_near, x_random)
         normed_direction = (x_random - x_near) / dist # normed vector
         new_state = x_random + (n * normed_direction)
         return new_state
@@ -133,7 +132,7 @@ class RRT_STAR(object):
         return the shortest path and the cost
         '''
         # TODO
-        path = self.compute_plan([],self.tree.vertices[0], self.tree.vertices[dest])
+        path = self.compute_plan([],0, dest)
         cost = self.compute_cost(path)
         return path, cost
     
