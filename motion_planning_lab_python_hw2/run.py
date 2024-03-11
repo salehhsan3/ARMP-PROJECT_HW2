@@ -20,10 +20,10 @@ def main():
                             p_bias=bias,)
         
         rrt_star_planner = RRT_STAR(max_step_size=stepsize,
-                                    max_itr=100, 
+                                    max_itr=2000, 
                                     bb=bb)
         
-        visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)
+        #visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)
         
         # --------- configurations-------------
         env2_start = np.deg2rad([110, -70, 90, -90, -90, 0 ])
@@ -37,9 +37,9 @@ def main():
         print("finished ", stepsize, ":",len(path),path)       
         try:
             np.save(filename+'_path'+str(stepsize)+'_'+str(bias), path)
-            path = np.load(filename+'_path'+str(stepsize)+'_'+str(bias)+".npy")
-            visualizer.show_path(path)
-            visualizer.show_conf(env2_goal)
+            #path = np.load(filename+'_path'+str(stepsize)+'_'+str(bias)+".npy")
+            #visualizer.show_path(path)
+            #visualizer.show_conf(env2_goal)
             
         except:
             print('No Path Found')
