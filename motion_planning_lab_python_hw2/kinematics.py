@@ -37,7 +37,7 @@ class UR5e_PARAMS(object):
                              'forearm_link':'green', 'wrist_1_link':'purple'
                             , 'wrist_2_link':'black', 'wrist_3_link':'blue'}
 
-        self.mechamical_limits = {'shoulder_link':[-np.pi, np.pi], 'upper_arm_link':[-np.pi, np.pi],
+        self.mechanical_limits = {'shoulder_link':[-np.pi, np.pi], 'upper_arm_link':[-np.pi, np.pi],
                                    'forearm_link':[-np.pi, np.pi], 'wrist_1_link':[-np.pi, np.pi],
                                     'wrist_2_link':[-np.pi, np.pi], 'wrist_3_link':[-np.pi, np.pi]}
 

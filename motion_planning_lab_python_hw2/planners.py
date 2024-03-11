@@ -10,14 +10,14 @@ class RRT_STAR(object):
         self.tree = RRTTree(bb)
     
     def find_path(self, start_conf, goal_conf, filename):
-        """Implement RRT-STAR - Return a path as numpy array"""
+        """Implement RRT-STAR"""
         
         i = 1
         time_start = time.time()
         self.tree.AddVertex(start_conf)
 
-        # while i < self.max_itr:
-        #     pass
+        while i < self.max_itr:
+            pass
         # TODO
 
 
