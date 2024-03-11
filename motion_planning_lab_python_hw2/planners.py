@@ -61,14 +61,14 @@ class RRT_STAR(object):
                         self.rewire(new_state_idx, idx)
         if goal_idx != None:
             self.compute_plan(plan,0, goal_idx)
-        else:
-            dist = 1000000000
-            best_idx = 0
-            for vert, vert_conf in enumerate(self.tree.vertices):
-                if self.bb.edge_cost(vert_conf,goal_conf) < dist:
-                    best_idx = vert
-                    dist = self.bb.edge_cost(vert_conf,goal_conf)
-            self.compute_plan(plan,0,best_idx)
+        # else:
+            # dist = 1000000000
+            # best_idx = 0
+            # for vert, vert_conf in enumerate(self.tree.vertices):
+            #     if self.bb.edge_cost(vert_conf,goal_conf) < dist:
+            #         best_idx = vert
+            #         dist = self.bb.edge_cost(vert_conf,goal_conf)
+            # self.compute_plan(plan,0,best_idx)
         return np.array(plan)
     
     def extend(self, x_near, x_random)-> np.array:
