@@ -78,6 +78,12 @@ class Building_Blocks(object):
             for sphere in spheres:
                 if sphere[2] < self.ur_params.sphere_radius[joint]:
                     return True
+        
+        # x - axis limit
+        for joint, spheres in global_sphere_coords.items(): #temp base always hits floor
+            for sphere in spheres:
+                if sphere[0] + self.ur_params.sphere_radius[joint] > 0.4:
+                    return True
         return False
         
     

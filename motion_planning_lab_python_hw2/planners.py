@@ -8,6 +8,29 @@ class RRT_STAR(object):
         self.max_itr = max_itr
         self.bb = bb
         self.tree = RRTTree(bb)
+        
+    def compute_plan(self, plan, start_conf, goal_conf):
+        curr_idx = self.tree.get_idx_for_state(start_conf)
+        start_idx = self.tree.get_idx_for_state(goal_conf)
+        while curr_idx != start_idx:
+            # print(self.tree.edges)
+            plan.append(self.tree.vertices[curr_idx].state)
+            curr_idx = self.tree.edges[curr_idx]
+        # Add the start state to the plan.
+        plan.append(start_conf)
+        plan.reverse()
+        return plan
+
+    def compute_cost(self, plan):
+        '''
+        Compute and return the plan cost, which is the sum of the distances between steps.
+        @param plan A given plan for the robot.
+        '''
+        # TODO: Task 4.4
+        cost = 0
+        for i in range(1, len(plan)):
+            cost += self.bb.edge_cost(plan[i-1],plan[i])
+        return cost
     
     def find_path(self, start_conf, goal_conf, filename):
         """Implement RRT-STAR"""
@@ -19,29 +42,21 @@ class RRT_STAR(object):
         
         while i < self.max_itr:
             self.real_k = self.get_k_num(i)
-            # goal_bias = np.random.random()
-            # x_limit, y_limit = self.planning_env.xlimit, self.planning_env.ylimit
-            # if goal_bias < self.goal_prob: # correct way??
-            #     random_state = np.array([np.random.uniform(x_limit[0], x_limit[1]), np.random.uniform(y_limit[0], y_limit[1])])
-            # else:
-            #     random_state = goal_conf
             random_state = self.bb.sample(goal_conf)
-            nearest_state_idx, nearest_state = self.tree.get_nearest_state(random_state)
+            nearest_state_idx, nearest_state = self.tree.GetNearestVertex(random_state)
             new_state = self.extend(nearest_state, random_state)
-            if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
+            # if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
+            if self.bb.is_in_collision(new_state) and self.bb.local_planner(nearest_state, new_state):
                 new_state_idx = self.tree.add_vertex(new_state)
-                self.tree.add_edge(nearest_state_idx, new_state_idx, self.planning_env.compute_distance(nearest_state, new_state))
+                self.tree.AddEdge(nearest_state_idx, new_state_idx)
                 if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.real_k: # make sure the state has at least has k neighbors
                     k_nearest_idxs, k_nearest_states = self.tree.GetKNN(new_state, self.real_k)
                     for idx in k_nearest_idxs:
                         self.rewire(idx, new_state_idx)
                     for idx in k_nearest_idxs:
                         self.rewire(new_state_idx, idx)
-                        
-        # return np.array(plan)
-
-
-
+        self.compute_plan(plan,start_conf,goal_conf)
+        return np.array(plan)
     
     def extend(self, x_near, x_random)-> np.array:
         '''
@@ -118,7 +133,10 @@ class RRT_STAR(object):
         return the shortest path and the cost
         '''
         # TODO
-        # return path, cost
+        start_config = np.array([130, -70, 90, -90, -90,0])
+        path = self.find_path()
+        cost = self.compute_cost(path)
+        return path, cost
     
     def get_k_num(self, i):
         '''
