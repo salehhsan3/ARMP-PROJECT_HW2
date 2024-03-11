@@ -37,6 +37,10 @@ def main():
         print("finished ", stepsize, ":",len(path),path)       
         try:
             np.save(filename+'_path'+str(stepsize)+'_'+str(bias), path)
+            path = np.load(filename+'_path'+str(stepsize)+'_'+str(bias)+".npy")
+            visualizer.show_path(path)
+            visualizer.show_conf(env2_goal)
+            
         except:
             print('No Path Found')
     
