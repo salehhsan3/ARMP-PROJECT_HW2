@@ -133,8 +133,7 @@ class RRT_STAR(object):
         return the shortest path and the cost
         '''
         # TODO
-        start_config = np.array([130, -70, 90, -90, -90,0])
-        path = self.find_path()
+        path = self.compute_plan([],self.tree.vertices[0], self.tree.vertices[dest])
         cost = self.compute_cost(path)
         return path, cost
     
@@ -153,106 +152,3 @@ class RRT_STAR(object):
         else:
             k_num = 7
         return k_num
-
-
-import numpy as np
-from RRTTree import RRTTree
-import time
-
-class RRTStarPlanner(object):
-
-    def __init__(self, planning_env, ext_mode, goal_prob, k):
-
-        # set environment and search tree
-        self.planning_env = planning_env
-        self.tree = RRTTree(self.planning_env)
-
-        # set search params
-        self.ext_mode = ext_mode
-        self.goal_prob = goal_prob
-        self.k = k
-        self.real_k = max(1, int(np.log(1 + len(self.tree.vertices)))) if (self.k == 1) else self.k # 1+log(n) to ensure it's larger than zero -- n could be 1
-        self.time_limit = 0
-        self.time_interval = 20 # time interval to check solution after
-        self.costs = []
-        self.times = []
-        
-    def plan_long_term(self):
-        self.plan()
-        if len(self.costs) == 0:
-            self.costs = [0]
-            self.times = [self.time_limit]
-        return self.costs, self.times
-
-    def plan(self):
-        '''
-        Compute and return the plan. The function should return a numpy array containing the states (positions) of the robot.
-        '''
-        start_time = time.time()
-        # self.time_limit = 300 # time limit for the algorithm's run time
-        prev_time = start_time
-        # initialize an empty plan.
-        plan = []
-        # TODO: Task 4.4
-        self.tree.add_vertex(self.planning_env.start)
-        while (time.time() - start_time < self.time_limit) or (not self.tree.is_goal_exists(self.planning_env.goal)):
-            self.real_k = max(1, int(np.log(1 + len(self.tree.vertices)))) if (self.k == 1) else self.k # to update the value!!
-            goal_bias = np.random.random()
-            x_limit, y_limit = self.planning_env.xlimit, self.planning_env.ylimit
-            if goal_bias < self.goal_prob: # correct way??
-                random_state = np.array([np.random.uniform(x_limit[0], x_limit[1]), np.random.uniform(y_limit[0], y_limit[1])])
-            else:
-                random_state = self.planning_env.goal
-            nearest_state_idx, nearest_state = self.tree.get_nearest_state(random_state)
-            new_state = self.extend(nearest_state, random_state)
-            if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
-                new_state_idx = self.tree.add_vertex(new_state)
-                self.tree.add_edge(nearest_state_idx, new_state_idx, self.planning_env.compute_distance(nearest_state, new_state))
-                if len([(_, vertex) for _, vertex in self.tree.vertices.items()]) > self.k: # make sure the state has at least has k neighbors
-                    k_nearest_idxs, k_nearest_states = self.tree.get_k_nearest_neighbors(new_state, self.real_k)
-                    for idx in k_nearest_idxs:
-                        self.rewire_rrt_star(idx, new_state_idx)
-                    for idx in k_nearest_idxs:
-                        self.rewire_rrt_star(new_state_idx, idx)
-            current_time = time.time() - prev_time
-            if (self.tree.is_goal_exists(self.planning_env.goal)) and (current_time >= self.time_interval):
-                if (time.time() - start_time) <= self.time_limit:
-                    plan = self.compute_plan([])
-                    self.costs.append(self.compute_cost(plan))
-                    self.times.append(time.time() - start_time)
-                    prev_time = time.time()
-        
-        # print total path cost and time
-        plan = self.compute_plan([])
-        if (time.time() - start_time) <= self.time_limit:
-            self.costs.append(self.compute_cost(plan))
-            self.times.append(time.time() - start_time)
-        
-        print('Total cost of path: {:.2f}'.format(self.compute_cost(plan)))
-        print('Total time: {:.2f}'.format(time.time()-start_time))
-
-        return np.array(plan)
-    
-    def compute_plan(self, plan):
-        curr_idx = self.tree.get_idx_for_state(self.planning_env.goal)
-        start_idx = self.tree.get_idx_for_state(self.planning_env.start)
-        while curr_idx != start_idx:
-            # print(self.tree.edges)
-            plan.append(self.tree.vertices[curr_idx].state)
-            curr_idx = self.tree.edges[curr_idx]
-        # Add the start state to the plan.
-        plan.append(self.planning_env.start)
-        plan.reverse()
-        return plan
-
-    def compute_cost(self, plan):
-        '''
-        Compute and return the plan cost, which is the sum of the distances between steps.
-        @param plan A given plan for the robot.
-        '''
-        # TODO: Task 4.4
-        cost = 0
-        for i in range(1, len(plan)):
-            cost += self.planning_env.compute_distance(plan[i-1],plan[i])
-        return cost
-    
