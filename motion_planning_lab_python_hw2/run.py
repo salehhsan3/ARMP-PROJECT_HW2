@@ -18,7 +18,7 @@ def main():
                         p_bias=0.05,)
     
     rrt_star_planner = RRT_STAR(max_step_size=0.5,
-                                max_itr=200, 
+                                max_itr=2000, 
                                 bb=bb)
     
     visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)
@@ -32,8 +32,8 @@ def main():
                                         goal_conf=env2_goal,
                                         filename=filename)
 
-    print(len(path))
-    print(path)       
+    # print(len(path))
+    # print(path)       
     try:
         np.save(filename+'_path', path)
         path = np.load(filename+'_path.npy')

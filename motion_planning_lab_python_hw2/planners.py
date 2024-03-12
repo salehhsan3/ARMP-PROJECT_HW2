@@ -47,8 +47,8 @@ class RRT_STAR(object):
             nearest_state_idx, nearest_state = self.tree.GetNearestVertex(random_state)
             new_state = self.extend(nearest_state, random_state)
             # if self.planning_env.state_validity_checker(new_state) and self.planning_env.edge_validity_checker(nearest_state, new_state):
-            if self.bb.local_planner(nearest_state,new_state):
-                print("in!")
+            if not self.bb.is_in_collision(new_state) and self.bb.local_planner(nearest_state,new_state):
+                print(i)
                 new_state_idx = self.tree.AddVertex(new_state)
                 if all(new_state == goal_conf):
                     goal_idx = new_state_idx
@@ -62,7 +62,8 @@ class RRT_STAR(object):
         if goal_idx != None:
             self.compute_plan(plan,0, goal_idx)
         else:
-            dist = 1000000000
+            print("print the nearest path you have to the goal coniguration")
+            dist = float('inf')
             best_idx = 0
             for vert, vert_conf in enumerate(self.tree.vertices):
                 if self.bb.edge_cost(vert_conf,goal_conf) < dist:
@@ -83,7 +84,7 @@ class RRT_STAR(object):
         if dist < n:
             return x_random
         normed_direction = (x_random - x_near) / dist # normed vector
-        new_state = x_random + (n * normed_direction)
+        new_state = x_near + (n * normed_direction)
         return new_state
         
     def rewire_children(self, parent_idx, parent_cost):
