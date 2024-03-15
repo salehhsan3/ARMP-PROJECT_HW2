@@ -37,7 +37,8 @@ def main():
             costs = []
             times = []
             direc_name = os.path.join(os.path.join('plots', f'bias={bias}'), f'stepsize={stepsize}')
-            for ind in range(num_runs):
+            ind = 0
+            while ind < num_runs:
                 if not os.path.exists(direc_name):
                     os.makedirs(direc_name)
                 if not os.path.exists(os.path.join(direc_name,'paths')):
@@ -63,6 +64,7 @@ def main():
                     np.save(os.path.join(os.path.join(direc_name,'paths'),filename), path)
                     costs.append(cost)
                     times.append(computation_time)
+                    ind += 1 # only when a path is found consider a run to be successful!
                 else:
                     # print("No path found for ", stepsize, bias, "run: ", ind)
                     costs.append(0) # found no path / empty path
@@ -84,7 +86,7 @@ def main():
             plt.xlabel('Computation Time')
             plt.ylabel('Cost')
             plt.title(f'Cost vs Computation Time (Max Step Size: {stepsize}, p_bias: {bias})')
-            
+            plt.grid(True)  # Add grid
             # Save plot
             plt.savefig(os.path.join(direc_name, f'plot_step_{stepsize}_bias_{bias}.png'))
             plt.close()
@@ -98,9 +100,10 @@ def main():
         plt.xlabel('Computation Time')
         plt.ylabel('Cost')
         plt.title(f'Cost vs Computation Time (Averaged over {num_runs} Runs)')
+        plt.grid(True)  # Add grid
         plt.legend()
         direc_name = os.path.join('plots', f'bias={bias}')
-        plt.savefig(os.path.join(direc_name, 'all_runs_plot.png'))
+        plt.savefig(os.path.join(direc_name, f'all_runs_plot_bias={bias}.png'))
         plt.close()
     
 if __name__ == '__main__':
