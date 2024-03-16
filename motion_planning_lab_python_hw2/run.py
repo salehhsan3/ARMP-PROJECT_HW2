@@ -31,13 +31,18 @@ def main():
         # ---------------------------------------
         filename = 'task2'
         path = rrt_star_planner.find_path(start_conf=env2_start,
-                                            goal_conf=env2_goal,
-                                            filename=filename)
+                                           goal_conf=env2_goal,
+                                           filename=filename)
 
         print("finished ", stepsize, ":",len(path),path)       
         try:
-            np.save(filename+'_path'+str(stepsize)+'_'+str(bias), path)
-            #path = np.load(filename+'_path'+str(stepsize)+'_'+str(bias)+".npy")
+            #np.save(filename+'_path'+str(stepsize)+'_'+str(bias), path)
+            path = np.load(filename+'_path'+str(stepsize)+'_'+str(bias)+".npy")
+            cost = 0
+            for c1, c2 in zip(path,path[1:]):
+                cost += bb.edge_cost(c1,c2)
+                
+            print(str(stepsize)+' '+str(bias), cost, len(path))
             #visualizer.show_path(path)
             #visualizer.show_conf(env2_goal)
             

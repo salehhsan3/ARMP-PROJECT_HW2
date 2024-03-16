@@ -82,7 +82,9 @@ def main():
             # Plotting the Cost vs Time plot for these recents runs for given bias, stepsize
             plt.figure(fig_ind)
             fig_ind += 1
-            plt.plot(times, costs)
+            # plt.plot(times, costs)
+            for k, stepsize in enumerate(time):
+                plt.scatter(times[k], costs[k])
             plt.xlabel('Computation Time')
             plt.ylabel('Cost')
             plt.title(f'Cost vs Computation Time (Max Step Size: {stepsize}, p_bias: {bias})')

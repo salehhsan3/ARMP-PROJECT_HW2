@@ -62,21 +62,21 @@ class RRT_STAR(object):
         print("")
         if goal_idx != None:
             self.compute_plan(plan,0, goal_idx)
-        else:
-            print("print the nearest path you have to the goal coniguration")
-            dist = float('inf')
-            best_idx = 0
-            for vert, vert_conf in enumerate(self.tree.vertices):
-                if self.bb.edge_cost(vert_conf,goal_conf) < dist:
-                    best_idx = vert
-                    dist = self.bb.edge_cost(vert_conf,goal_conf)
-            print("[ ] No solution found, best has cost", dist)
-            if(self.bb.local_planner(goal_conf,self.tree.vertices[best_idx])):      #TODO, make sure its better than step
-                self.compute_plan(plan,0,best_idx)
-                plan.append(goal_conf)
-                print("[V] Using closest edge", self.tree.vertices[best_idx])
-            else:
-                print("[X] Best edge failed ")
+        # else:
+            # print("print the nearest path you have to the goal coniguration")
+            # dist = float('inf')
+            # best_idx = 0
+            # for vert, vert_conf in enumerate(self.tree.vertices):
+            #     if self.bb.edge_cost(vert_conf,goal_conf) < dist:
+            #         best_idx = vert
+            #         dist = self.bb.edge_cost(vert_conf,goal_conf)
+            # print("[ ] No solution found, best has cost", dist)
+            # if(self.bb.local_planner(goal_conf,self.tree.vertices[best_idx])):      #TODO, make sure its better than step
+            #     self.compute_plan(plan,0,best_idx)
+            #     plan.append(goal_conf)
+            #     print("[V] Using closest edge", self.tree.vertices[best_idx])
+            # else:
+            #     print("[X] Best edge failed ")
         return np.array(plan)
     
     def extend(self, x_near, x_random)-> np.array:
